@@ -1,2 +1,2 @@
 # RTMLton
-RTEMS MLton port
+Working in progress RTEMS MLton port.
