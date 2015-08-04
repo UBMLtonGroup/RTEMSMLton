@@ -1,0 +1,9 @@
+MLton is a whole-program optimizing compiler for the Standard ML
+programming language. See README.original for MLton's feature
+description.
+
+This is a port of MLton to RTEMS X86. 
+
+Compiling:
+
+1. Make sure you have installed RTEM

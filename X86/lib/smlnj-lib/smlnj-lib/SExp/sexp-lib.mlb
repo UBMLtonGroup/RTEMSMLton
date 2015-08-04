@@ -1,0 +1,171 @@
+
+ann
+  "nonexhaustiveMatch ignore" "redundantMatch warn"
+  "sequenceNonUnit ignore"
+  "warnUnused false" "forceUsed"
+in
+
+local
+  basis l8 =
+    bas
+      (* $/basis.cm ====> *) $(SML_LIB)/basis/basis.mlb
+    end
+  basis l4 =
+    bas
+      (* $/smlnj-lib.cm ====> *) $(SML_LIB)/smlnj-lib/Util/smlnj-lib.mlb
+    end
+  basis l38 =
+    bas
+      (* $/ml-lpt-lib.cm ====> *) $(SML_LIB)/mllpt-lib/mllpt-lib.mlb
+    end
+in
+local
+   $(SML_LIB)/basis/pervasive.mlb
+   local
+      open l4
+   in
+      structure gs_0 = Format
+   end
+   local
+      open l8
+   in
+      structure gs_1 = TextIO
+   end
+   local
+      open l8
+   in
+      structure gs_2 = String
+   end
+   local
+      open l8
+   in
+      structure gs_3 = List
+   end
+   local
+      open l4
+   in
+      structure gs_4 = Atom
+   end
+   local
+      open l8
+   in
+      structure gs_5 = IntInf
+   end
+   local
+      open l8
+   in
+      structure gs_6 = ListPair
+   end
+   local
+      open l8
+   in
+      structure gs_7 = Real
+   end
+   local
+      structure Atom = gs_4
+      structure IntInf = gs_5
+      structure ListPair = gs_6
+      structure Real = gs_7
+      sexp.sml
+   in
+      structure gs_8 = SExp
+   end
+   local
+      structure Atom = gs_4
+      structure Format = gs_0
+      structure List = gs_3
+      structure SExp = gs_8
+      structure String = gs_2
+      structure TextIO = gs_1
+      sexp-printer.sml
+   in
+      structure gs_9 = SExpPrinter
+   end
+   local
+      open l38
+   in
+      structure gs_10 = AntlrStreamPos
+   end
+   local
+      open l38
+   in
+      structure gs_11 = UTF8
+   end
+   local
+      structure IntInf = gs_5
+      structure List = gs_3
+      structure Real = gs_7
+      structure String = gs_2
+      structure UTF8 = gs_11
+      sexp-tokens.sml
+   in
+      structure gs_12 = SExpTokens
+   end
+   local
+      open l8
+   in
+      structure gs_13 = StringCvt
+   end
+   local
+      open l8
+   in
+      structure gs_14 = LargeReal
+   end
+   local
+      open l8
+   in
+      structure gs_15 = Substring
+   end
+   local
+      open l8
+   in
+      structure gs_16 = Vector
+   end
+   local
+      open l38
+   in
+      structure gs_17 = ULexBuffer
+   end
+   local
+      open l8
+   in
+      structure gs_18 = Word
+   end
+   local
+      structure AntlrStreamPos = gs_10
+      structure IntInf = gs_5
+      structure LargeReal = gs_14
+      structure List = gs_3
+      structure SExpTokens = gs_12
+      structure String = gs_2
+      structure StringCvt = gs_13
+      structure Substring = gs_15
+      structure TextIO = gs_1
+      structure ULexBuffer = gs_17
+      structure UTF8 = gs_11
+      structure Vector = gs_16
+      structure Word = gs_18
+      sexp.lex.sml
+   in
+      structure gs_19 = SExpLexer
+   end
+   local
+      structure AntlrStreamPos = gs_10
+      structure Atom = gs_4
+      structure List = gs_3
+      structure SExp = gs_8
+      structure SExpLexer = gs_19
+      structure SExpTokens = gs_12
+      structure TextIO = gs_1
+      sexp-parser.sml
+   in
+      structure gs_20 = SExpParser
+   end
+in
+   structure SExp = gs_8
+   structure SExpParser = gs_20
+   structure SExpPrinter = gs_9
+end
+end
+
+end
