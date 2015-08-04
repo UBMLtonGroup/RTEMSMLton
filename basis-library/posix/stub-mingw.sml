@@ -125,18 +125,5 @@ in
                         end
                   end
             end
-
-         structure Socket =
-            struct
-               open Socket
-
-               structure UnixSock =
-                  struct
-                     open UnixSock
-
-                     val toAddr = stub ("toAddr", toAddr)
-                     val fromAddr = stub ("fromAddr", fromAddr)
-                  end
-            end
       end
 end

@@ -72,9 +72,6 @@ structure C_Time : sig
                    end = C_Time
 structure C_UId : C_SYSTYPE = C_UId
 
-(* from <sys/socket.h> *)
-structure C_Socklen = C_Socklen
-
 (* from <termios.h> *)
 structure C_CC : C_SYSTYPE = C_CC
 structure C_Speed : sig

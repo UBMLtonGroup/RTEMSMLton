@@ -182,7 +182,7 @@ static inline void MLton_fixSocketErrno (void) {}
 /* Platform has no MSG_DONTWAIT flag for recv(), so these must be
    defined to simulate that flag. */
 PRIVATE int MLton_recv(int s, void *buf, int len, int flags);
-PRIVATE int MLton_recvfrom(int s, void *buf, int len, int flags, void *from, socklen_t *fromlen);
+//PRIVATE int MLton_recvfrom(int s, void *buf, int len, int flags, void *from, socklen_t *fromlen);
 #endif
 
 #endif /* _MLTON_PLATFORM_H_ */

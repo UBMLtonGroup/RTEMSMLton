@@ -11,12 +11,12 @@ all: smlnj-lib/README.mlton
 
 smlnj-lib/README.mlton: smlnj-lib.tgz smlnj-lib.patch
 	rm -rf smlnj-lib
-	gzip -dc smlnj-lib.tgz | tar xf -
+	tar xf smlnj-lib.tgz
 	chmod -R a+r smlnj-lib
 	chmod -R g-s smlnj-lib
 	rm -f smlnj-lib/HTML/.cvsignore
-	patch -s -d smlnj-lib -p1 < smlnj-lib.patch
-	mv smlnj-lib/LICENSE ../../doc/license/SMLNJ-LIB-LICENSE
+#	patch -s -d smlnj-lib -p1 < smlnj-lib.patch
+#	mv smlnj-lib/LICENSE ../../doc/license/SMLNJ-LIB-LICENSE
 
 .PHONY: clean
 clean:

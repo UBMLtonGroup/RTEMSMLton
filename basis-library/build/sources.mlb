@@ -321,23 +321,6 @@ in
    ../system/timer.sig
    ../system/timer.sml
 
-   ../net/net.sig
-   ../net/net.sml
-   ../net/net-host-db.sig
-   ../net/net-host-db.sml
-   ../net/net-prot-db.sig
-   ../net/net-prot-db.sml
-   ../net/net-serv-db.sig
-   ../net/net-serv-db.sml
-   ../net/socket.sig
-   ../net/socket.sml
-   ../net/generic-sock.sig
-   ../net/generic-sock.sml
-   ../net/inet-sock.sig
-   ../net/inet-sock.sml
-   ../net/unix-sock.sig
-   ../net/unix-sock.sml
-
    ../mlton/platform.sig
    ../mlton/platform.sml
    ../mlton/array.sig

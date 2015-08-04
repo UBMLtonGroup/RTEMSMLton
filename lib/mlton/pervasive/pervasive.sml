@@ -40,7 +40,6 @@ structure Pervasive =
       structure Real = Real
       structure Real32 = Real32
       structure Real64 = Real64
-      structure Socket = Socket
       structure String = String
       structure StringCvt = StringCvt
       structure Substring = Substring

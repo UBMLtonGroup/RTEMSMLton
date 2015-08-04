@@ -211,6 +211,7 @@ structure Platform =
              | NetBSD
              | OpenBSD
              | Solaris
+	     | Rtems
 
             val host: t =
                case _const "MLton_Platform_OS_host": String8.string; of
@@ -225,6 +226,7 @@ structure Platform =
                 | "netbsd" => NetBSD
                 | "openbsd" => OpenBSD
                 | "solaris" => Solaris
+                | "rtems" => Rtems
                 | _ => raise Primitive.Exn.Fail8 "strange MLton_Platform_OS_host"
 
             val forkIsEnabled =

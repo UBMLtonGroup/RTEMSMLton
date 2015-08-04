@@ -1135,6 +1135,7 @@ fun commandLine (args: string list): unit =
           | NetBSD => ()
           | OpenBSD => ()
           | Solaris => ()
+          | Rtems => ()
           | _ =>
                if !profile = ProfileTimeField
                   orelse !profile = ProfileTimeLabel
