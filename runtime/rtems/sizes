@@ -1,8 +1,0 @@
-cint = 4
-cpointer = 4
-cptrdiff = 4
-csize = 4
-header = 4
-mplimb = 4
-objptr = 4
-seqIndex = 4
