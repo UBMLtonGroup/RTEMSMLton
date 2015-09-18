@@ -1,5 +1,5 @@
-RTEMS="/home/bruce/Programming/RTEMS10/pc386/i386-rtems4.10/pc386/lib"
-GMP="/home/bruce/Programming/gmp-build"
+RTEMS="/mnt/work/RTEMS/rtems/i386-rtems4.10/pc386/lib"
+GMP="/mnt/work/RTEMS/gmp-install"
 
 cp runtime/Makefile.rtems runtime/Makefile
 cd runtime && make clean && cd ..
