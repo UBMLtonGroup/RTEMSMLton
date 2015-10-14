@@ -24,6 +24,7 @@ signature RUNTIME =
              | CurSourceSeqsIndex
              | ExnStack
              | Frontier (* The place where the next object is allocated. *)
+             | UMFrontier (* The place where the next object is allocated on the uniform memory heap. *)
              | Limit (* frontier + heapSize - LIMIT_SLOP *)
              | LimitPlusSlop (* frontier + heapSize *)
              | MaxFrameSize
@@ -31,6 +32,7 @@ signature RUNTIME =
              | StackBottom
              | StackLimit (* Must have StackTop <= StackLimit *)
              | StackTop (* Points at the next available byte on the stack. *)
+             | FLChunks
 
             val layout: t -> Layout.t
             val offset: t -> Bytes.t (* Field offset in struct GC_state. *)
@@ -40,26 +42,30 @@ signature RUNTIME =
                              curSourceSeqsIndex: Bytes.t,
                              exnStack: Bytes.t,
                              frontier: Bytes.t,
+                             umfrontier: Bytes.t,
                              limit: Bytes.t,
                              limitPlusSlop: Bytes.t,
                              maxFrameSize: Bytes.t,
                              signalIsPending: Bytes.t,
                              stackBottom: Bytes.t,
                              stackLimit: Bytes.t,
-                             stackTop: Bytes.t} -> unit
+                             stackTop: Bytes.t,
+                             flChunks: Bytes.t} -> unit
             val setSizes: {atomicState: Bytes.t,
                            cardMapAbsolute: Bytes.t,
                            currentThread: Bytes.t,
                            curSourceSeqsIndex: Bytes.t,
                            exnStack: Bytes.t,
                            frontier: Bytes.t,
+                           umfrontier: Bytes.t,
                            limit: Bytes.t,
                            limitPlusSlop: Bytes.t,
                            maxFrameSize: Bytes.t,
                            signalIsPending: Bytes.t,
                            stackBottom: Bytes.t,
                            stackLimit: Bytes.t,
-                           stackTop: Bytes.t} -> unit
+                           stackTop: Bytes.t,
+                           flChunks: Bytes.t} -> unit
             val size: t -> Bytes.t (* Field size in struct GC_state. *)
             val toString: t -> string
          end
@@ -87,4 +93,6 @@ signature RUNTIME =
       val cpointerSize: unit -> Bytes.t
       val objptrSize: unit -> Bytes.t
       val typeIndexToHeader: int -> word
+      val objChunkSize: unit -> Bytes.t
+      val objChunkSlop: word
    end

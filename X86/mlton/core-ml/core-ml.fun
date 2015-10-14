@@ -43,7 +43,6 @@ structure Pat =
        | Const of unit -> Const.t
        | Layered of Var.t * t
        | List of t vector
-       | Or of t vector
        | Record of t Record.t
        | Tuple of t vector
        | Var of Var.t
@@ -75,7 +74,6 @@ structure Pat =
              | Layered (x, p) =>
                   seq [maybeConstrain (Var.layout x, t), str " as ", layout p]
              | List ps => list (Vector.toListMap (ps, layout))
-             | Or ps => list (Vector.toListMap (ps, layout))
              | Record r =>
                   record (Vector.toListMap
                           (Record.toVector r, fn (f, p) =>
@@ -115,7 +113,6 @@ structure Pat =
           | Const _ => true
           | Layered (_, p) => isRefutable p
           | List _ => true
-          | Or ps => Vector.exists (ps, isRefutable)
           | Record r => Record.exists (r, isRefutable)
           | Tuple ps => Vector.exists (ps, isRefutable)
           | Var _ => false
@@ -129,7 +126,6 @@ structure Pat =
                 | Const _ => ()
                 | Layered (x, p) => (f x; loop p)
                 | List ps => Vector.foreach (ps, loop)
-                | Or ps => Vector.foreach (ps, loop)
                 | Record r => Record.foreach (r, loop)
                 | Tuple ps => Vector.foreach (ps, loop)
                 | Var x => f x

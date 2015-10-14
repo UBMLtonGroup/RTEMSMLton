@@ -25,6 +25,8 @@ typedef GC_state GCState_t;
 
 #include "gc/debug.h"
 
+#include "gc/um_constants.h"
+
 #include "gc/align.h"
 #include "gc/model.h"
 #include "gc/pointer.h"
@@ -40,8 +42,12 @@ typedef GC_state GCState_t;
 #include "gc/object-size.h"
 #include "gc/generational.h"
 #include "gc/heap.h"
+#include "gc/umheap.h"
 #include "gc/current.h"
+//#include "gc/umarray.h"
 #include "gc/foreach.h"
+#include "gc/dfs-mark.h"
+#include "gc/ummark.h"
 #include "gc/translate.h"
 #include "gc/sysvals.h"
 #include "gc/controls.h"
@@ -50,7 +56,6 @@ typedef GC_state GCState_t;
 #include "gc/forward.h"
 #include "gc/cheney-copy.h"
 #include "gc/hash-cons.h"
-#include "gc/dfs-mark.h"
 #include "gc/mark-compact.h"
 #include "gc/invariant.h"
 #include "gc/atomic.h"
@@ -61,6 +66,7 @@ typedef GC_state GCState_t;
 #include "gc/garbage-collection.h"
 #include "gc/new-object.h"
 #include "gc/array-allocate.h"
+#include "gc/umarray-allocate.h"
 #include "gc/sources.h"
 #include "gc/call-stack.h"
 #include "gc/profiling.h"
@@ -74,5 +80,8 @@ typedef GC_state GCState_t;
 #include "gc/pack.h"
 #include "gc/size.h"
 #include "gc/share.h"
+#include "gc/um.h"
+#include "gc/um_profile.h"
+#include "gc/visualize.h"
 
 #endif /* _MLTON_GC_H_ */

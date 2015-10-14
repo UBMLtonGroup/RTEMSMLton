@@ -1,4 +1,4 @@
-/* Copyright (C) 2009,2012,2015 Matthew Fluet.
+/* Copyright (C) 2009,2012 Matthew Fluet.
  * Copyright (C) 1999-2008 Henry Cejtin, Matthew Fluet, Suresh
  *    Jagannathan, and Stephen Weeks.
  * Copyright (C) 1997-2000 NEC Research Institute.
@@ -71,11 +71,11 @@ bad:
 /*                             GC_init                              */
 /* ---------------------------------------------------------------- */
 
-int processAtMLton (GC_state s, int start, int argc, char **argv,
+int processAtMLton (GC_state s, int argc, char **argv,
                     char **worldFile) {
   int i;
 
-  i = start;
+  i = 1;
   while (s->controls.mayProcessAtMLton
          and i < argc
          and (0 == strcmp (argv [i], "@MLton"))) {
@@ -313,6 +313,8 @@ int GC_init (GC_state s, int argc, char **argv) {
   s->currentThread = BOGUS_OBJPTR;
   s->hashConsDuringGC = FALSE;
   initHeap (s, &s->heap);
+  initUMHeap (s, &s->umheap);
+  initUMArrayHeap (s, &s->umarheap);
   s->lastMajorStatistics.bytesHashConsed = 0;
   s->lastMajorStatistics.bytesLive = 0;
   s->lastMajorStatistics.kind = GC_COPYING;
@@ -337,8 +339,8 @@ int GC_init (GC_state s, int argc, char **argv) {
 
   unless (isAligned (s->sysvals.pageSize, CARD_SIZE))
     die ("Page size must be a multiple of card size.");
-  processAtMLton (s, 0, s->atMLtonsLength, s->atMLtons, &worldFile);
-  res = processAtMLton (s, 1, argc, argv, &worldFile);
+  processAtMLton (s, s->atMLtonsLength, s->atMLtons, &worldFile);
+  res = processAtMLton (s, argc, argv, &worldFile);
   if (s->controls.fixedHeap > 0 and s->controls.maxHeap > 0)
     die ("Cannot use both fixed-heap and max-heap.");
   unless (s->controls.ratios.markCompact <= s->controls.ratios.copy
@@ -395,5 +397,6 @@ int GC_init (GC_state s, int argc, char **argv) {
     assert (invariantForMutator (s, TRUE, TRUE));
   }
   s->amInGC = FALSE;
+
   return res;
 }

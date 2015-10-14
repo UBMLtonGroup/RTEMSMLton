@@ -1,4 +1,4 @@
-(* Copyright (C) 2010-2011,2013-2015 Matthew Fluet.
+(* Copyright (C) 2010-2011,2013-2014 Matthew Fluet.
  * Copyright (C) 1999-2009 Henry Cejtin, Matthew Fluet, Suresh
  *    Jagannathan, and Stephen Weeks.
  * Copyright (C) 1997-2000 NEC Research Institute.
@@ -193,7 +193,6 @@ fun defaultAlignIs8 () =
          Alpha => true
        | AMD64 => true
        | ARM => true
-       | ARM64 => true
        | HPPA => true
        | IA64 => true
        | MIPS => true
@@ -430,6 +429,13 @@ fun makeOptions {usage} =
                        | "first" => First
                        | "every" => Every
                        | _ => usage (concat ["invalid -gc-check flag: ", s])))),
+       (Expert, "gc-module", " {none|default}", "select GC module",
+        SpaceString (fn s =>
+                     gcModule :=
+                     (case s of
+                         "none" => GCModuleNone
+                       | "default" => GCModuleDefault
+                       | _ => usage (concat ["invalid -gc-module flag: ", s])))),
        (Normal, "ieee-fp", " {false|true}", "use strict IEEE floating-point",
         boolRef Native.IEEEFP),
        (Expert, "indentation", " <n>", "indentation level in ILs",
@@ -501,8 +507,7 @@ fun makeOptions {usage} =
        (Normal, "keep", " {g|o}", "save intermediate files",
         SpaceString (fn s =>
                      case s of
-                        "ast" => keepAST := true
-                      | "core-ml" => keepCoreML := true
+                        "core-ml" => keepCoreML := true
                       | "dot" => keepDot := true
                       | "g" => keepGenerated := true
                       | "machine" => keepMachine := true
@@ -1009,7 +1014,8 @@ fun commandLine (args: string list): unit =
              header = lookup "header",
              mplimb = lookup "mplimb",
              objptr = lookup "objptr",
-             seqIndex = lookup "seqIndex"}
+             seqIndex = lookup "seqIndex",
+             objChunkSize = lookup "objChunkSize"}
          end
 
       fun tokenize l =
@@ -1135,7 +1141,6 @@ fun commandLine (args: string list): unit =
           | NetBSD => ()
           | OpenBSD => ()
           | Solaris => ()
-          | Rtems => ()
           | _ =>
                if !profile = ProfileTimeField
                   orelse !profile = ProfileTimeLabel
@@ -1274,7 +1279,7 @@ fun commandLine (args: string list): unit =
                      val _ =
                         atMLtons :=
                         Vector.fromList
-                        (tokenize (rev ("--" :: (!runtimeArgs))))
+                        (maybeOut "" :: tokenize (rev ("--" :: (!runtimeArgs))))
                      (* The -Wa,--gstabs says to pass the --gstabs option to the
                       * assembler. This tells the assembler to generate stabs
                       * debugging information for each assembler line.

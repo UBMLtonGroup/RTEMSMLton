@@ -1,4 +1,4 @@
-(* Copyright (C) 2009,2014-2015 Matthew Fluet.
+(* Copyright (C) 2009,2014 Matthew Fluet.
  * Copyright (C) 1999-2008 Henry Cejtin, Matthew Fluet, Suresh
  *    Jagannathan, and Stephen Weeks.
  * Copyright (C) 1997-2000 NEC Research Institute.
@@ -160,6 +160,7 @@ structure Operand =
           | Cast (z, _) => isMem z
           | Contents _ => true
           | Offset _ => true
+          | ChunkedOffset _ => true
           | StackOffset _ => true
           | _ => false
    end
@@ -409,15 +410,9 @@ fun outputDeclarations
                case !Control.align of
                   Control.Align4 => 4
                 | Control.Align8 => 8
-            val magic =
-               let
-                  val version = String.hash Version.version
-                  val random = Random.word ()
-               in
-                  Word.orb
-                  (Word.<< (version, Word.fromInt (Word.wordSize - 8)),
-                   Word.>> (random, Word.fromInt 8))
-               end
+            val magic = C.word (case Random.useed () of
+                                   NONE => String.hash (!Control.inputFile)
+                                 | SOME w => w)
             val profile =
                case !Control.profile of
                   Control.ProfileNone => "PROFILE_NONE"
@@ -428,6 +423,10 @@ fun outputDeclarations
                 | Control.ProfileLabel => "PROFILE_NONE"
                 | Control.ProfileTimeField => "PROFILE_TIME_FIELD"
                 | Control.ProfileTimeLabel => "PROFILE_TIME_LABEL"
+            val gcmodule =
+            	case !Control.gcModule of
+            		Control.GCModuleNone => "GC_NONE"
+            	 |  Control.GCModuleDefault => "GC_DEFAULT"
          in
             C.callNoSemi (case !Control.format of
                              Control.Archive => "MLtonLibrary"
@@ -435,11 +434,12 @@ fun outputDeclarations
                            | Control.LibArchive => "MLtonLibrary"
                            | Control.Library => "MLtonLibrary",
                           [C.int align,
-                           C.word magic,
+                           magic,
                            C.bytes maxFrameSize,
                            C.bool (!Control.markCards),
                            profile,
-                           C.bool (!Control.profileStack)]
+                           C.bool (!Control.profileStack),
+                           gcmodule]
                           @ additionalMainArgs,
                           print)
             ; print "\n"
@@ -689,14 +689,16 @@ fun output {program as Machine.Program.T {chunks,
          fun toString (z: Operand.t): string =
             case z of
                ArrayOffset {base, index, offset, scale, ty} =>
-                  concat ["X", C.args [Type.toC ty,
-                                       toString base,
-                                       toString index,
-                                       Scale.toString scale,
-                                       C.bytes offset]]
+               concat ["X", C.args [Type.toC ty,
+                                    toString GCState,
+                                    toString base,
+                                    toString index,
+                                    Scale.toString scale,
+                                    C.bytes offset]]
              | Cast (z, ty) => concat ["(", Type.toC ty, ")", toString z]
              | Contents {oper, ty} => contents (ty, toString oper)
              | Frontier => "Frontier"
+             | UMFrontier => "UMFrontier"
              | GCState => "GCState"
              | Global g =>
                   if Global.isRoot g
@@ -710,6 +712,13 @@ fun output {program as Machine.Program.T {chunks,
                   concat ["O", C.args [Type.toC ty,
                                        toString base,
                                        C.bytes offset]]
+             | ChunkedOffset {base, offset, ty, size} =>
+                  concat [ "CHOFF"
+                         , C.args [ toString GCState
+                                  , Type.toC ty
+                                  , toString base
+                                  , C.bytes offset
+                                  , C.bytes size ]]
              | Real r => RealX.toC r
              | Register r =>
                   concat [Type.name (Register.ty r), "_",
@@ -867,6 +876,8 @@ fun output {program as Machine.Program.T {chunks,
                       | Operand.Contents {oper, ...} =>
                            (usesStack oper)
                       | Operand.Offset {base, ...} =>
+                           (usesStack base)
+                      | Operand.ChunkedOffset {base, ...} =>
                            (usesStack base)
                       | Operand.StackOffset _ => true
                       | _ => false
@@ -1192,6 +1203,7 @@ fun output {program as Machine.Program.T {chunks,
                List.foreach
                ([("ExnStackOffset", GCField.ExnStack),
                  ("FrontierOffset", GCField.Frontier),
+                 ("UMFrontierOffset", GCField.UMFrontier),
                  ("StackBottomOffset", GCField.StackBottom),
                  ("StackTopOffset", GCField.StackTop)],
                 fn (name, f) =>

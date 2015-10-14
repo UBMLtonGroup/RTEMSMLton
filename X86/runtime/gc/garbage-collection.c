@@ -8,22 +8,22 @@
  */
 
 void minorGC (GC_state s) {
-  minorCheneyCopyGC (s);
+    minorCheneyCopyGC (s);
 }
 
-void majorGC (GC_state s, size_t bytesRequested, bool mayResize) {
+__attribute__ ((unused)) void majorGC (GC_state s, size_t bytesRequested, bool mayResize) {
   uintmax_t numGCs;
   size_t desiredSize;
 
   s->lastMajorStatistics.numMinorGCs = 0;
-  numGCs = 
-    s->cumulativeStatistics.numCopyingGCs 
+  numGCs =
+    s->cumulativeStatistics.numCopyingGCs
     + s->cumulativeStatistics.numMarkCompactGCs;
   if (0 < numGCs
       and ((float)(s->cumulativeStatistics.numHashConsGCs) / (float)(numGCs)
            < s->controls.ratios.hashCons))
     s->hashConsDuringGC = TRUE;
-  desiredSize = 
+  desiredSize =
     sizeofHeapDesired (s, s->lastMajorStatistics.bytesLive + bytesRequested, 0);
   if (not FORCE_MARK_COMPACT
       and not s->hashConsDuringGC // only markCompact can hash cons
@@ -45,6 +45,10 @@ void majorGC (GC_state s, size_t bytesRequested, bool mayResize) {
   if (mayResize) {
     resizeHeap (s, s->lastMajorStatistics.bytesLive + bytesRequested);
   }
+
+
+  fprintf(stderr, "Collection done\n");
+
   setCardMapAndCrossMap (s);
   resizeHeapSecondary (s);
   assert (s->heap.oldGenSize + bytesRequested <= s->heap.size);
@@ -56,7 +60,7 @@ void growStackCurrent (GC_state s) {
 
   reserved = sizeofStackGrowReserved (s, getStackCurrent(s));
   if (DEBUG_STACKS or s->controls.messages)
-    fprintf (stderr, 
+    fprintf (stderr,
              "[GC: Growing stack of size %s bytes to size %s bytes, using %s bytes.]\n",
              uintmaxToCommaString(getStackCurrent(s)->reserved),
              uintmaxToCommaString(reserved),
@@ -73,7 +77,7 @@ void enterGC (GC_state s) {
     /* We don't need to profileEnter for count profiling because it
      * has already bumped the counter.  If we did allow the bump, then
      * the count would look like function(s) had run an extra time.
-     */  
+     */
     if (s->profiling.stack
         and not (PROFILE_COUNT == s->profiling.kind))
       GC_profileEnter (s);
@@ -90,33 +94,136 @@ void leaveGC (GC_state s) {
   s->amInGC = FALSE;
 }
 
-void performGC (GC_state s, 
+
+
+void performUMGC(GC_state s,
+                 size_t ensureObjectChunksAvailable,
+                 size_t ensureArrayChunksAvailable,
+                 bool fullGC) {
+
+    if (DEBUG_MEM) {
+        fprintf(stderr, "PerformUMGC\n");
+        dumpUMHeap(s);
+    }
+
+
+#ifdef PROFILE_UMGC
+    long t_start = getCurrentTime();
+    fprintf(stderr, "[GC] Free chunk: %d, Free array chunk: %d\n",
+            s->fl_chunks,
+            s->fl_array_chunks);
+#endif
+
+    GC_stack currentStack = getStackCurrent(s);
+    foreachGlobalObjptr (s, umDfsMarkObjectsMark);
+    foreachObjptrInObject(s, (pointer) currentStack, umDfsMarkObjectsMark, FALSE);
+
+//    foreachGlobalObjptr (s, dfsMarkWithoutHashConsWithLinkWeaks);
+//    GC_stack currentStack = getStackCurrent(s);
+//    foreachObjptrInObject(s, currentStack,
+//                          dfsMarkWithoutHashConsWithLinkWeaks, FALSE);
+
+
+
+    pointer pchunk;
+    size_t step = sizeof(struct GC_UM_Chunk);
+    pointer end = s->umheap.start + s->umheap.size - step;
+
+    //    if (s->umheap.fl_chunks <= 2000) {
+    for (pchunk=s->umheap.start;
+         pchunk < end;
+         pchunk+=step) {
+        GC_UM_Chunk pc = (GC_UM_Chunk)pchunk;
+        if ((pc->chunk_header & UM_CHUNK_IN_USE) &&
+            (!(pc->chunk_header & UM_CHUNK_HEADER_MASK))) {
+            if (DEBUG_MEM) {
+                fprintf(stderr, "Collecting: "FMTPTR", %d, %d\n",
+                        (uintptr_t)pc, pc->sentinel, pc->chunk_header);
+            }
+            insertFreeChunk(s, &(s->umheap), pchunk);
+        }
+
+        if (!fullGC && s->fl_chunks >= ensureObjectChunksAvailable) {
+            break;
+        }
+    }
+        //    }
+
+    step = sizeof(struct GC_UM_Array_Chunk);
+    end = s->umarheap.start + s->umarheap.size - step;
+
+    for (pchunk=s->umarheap.start;
+         pchunk < end;
+         pchunk += step) {
+        GC_UM_Array_Chunk pc = (GC_UM_Array_Chunk)pchunk;
+        if ((pc->array_chunk_header & UM_CHUNK_IN_USE) &&
+            (!(pc->array_chunk_header & UM_CHUNK_HEADER_MASK))) {
+            if (DEBUG_MEM) {
+                fprintf(stderr, "Collecting array: "FMTPTR", %d, %d\n",
+                        (uintptr_t)pc, pc->array_chunk_magic,
+                        pc->array_chunk_header);
+            }
+            insertArrayFreeChunk(s, &(s->umarheap), pchunk);
+        }
+
+        if (!fullGC &&
+            s->fl_array_chunks >= ensureArrayChunksAvailable) {
+            fprintf(stderr, "Array chunk ensured\n");
+            break;
+        }
+    }
+
+    foreachObjptrInObject(s, (pointer) currentStack, umDfsMarkObjectsUnMark, FALSE);
+    foreachGlobalObjptr (s, umDfsMarkObjectsUnMark);
+
+#ifdef PROFILE_UMGC
+    long t_end = getCurrentTime();
+    fprintf(stderr, "[GC] Time: %ld, Free chunk: %d, Free array chunk: %d, "
+            "ensureArrayChunk: %d\n",
+            t_end - t_start,
+            s->fl_chunks,
+            s->fl_array_chunks,
+            ensureArrayChunksAvailable);
+#endif
+
+}
+
+void performGC (GC_state s,
                 size_t oldGenBytesRequested,
-                size_t nurseryBytesRequested, 
+                size_t nurseryBytesRequested,
                 bool forceMajor,
-                bool mayResize) {
+                __attribute__ ((unused)) bool mayResize) {
   uintmax_t gcTime;
   bool stackTopOk;
   size_t stackBytesRequested;
   struct rusage ru_start;
   size_t totalBytesRequested;
+//  if (s->gc_module == GC_UM) {
+//      performUMGC(s);
+//	  return;
+//  }
+
+
+  if (s->gc_module == GC_NONE) {
+      return;
+  }
 
   enterGC (s);
   s->cumulativeStatistics.numGCs++;
   if (DEBUG or s->controls.messages) {
     size_t nurserySize = s->heap.size - ((size_t)(s->heap.nursery - s->heap.start));
     size_t nurseryUsed = (size_t)(s->frontier - s->heap.nursery);
-    fprintf (stderr, 
+    fprintf (stderr,
              "[GC: Starting gc #%s; requesting %s nursery bytes and %s old-gen bytes,]\n",
              uintmaxToCommaString(s->cumulativeStatistics.numGCs),
              uintmaxToCommaString(nurseryBytesRequested),
              uintmaxToCommaString(oldGenBytesRequested));
-    fprintf (stderr, 
+    fprintf (stderr,
              "[GC:\theap at "FMTPTR" of size %s bytes (+ %s bytes card/cross map),]\n",
              (uintptr_t)(s->heap.start),
              uintmaxToCommaString(s->heap.size),
              uintmaxToCommaString(s->heap.withMapsSize - s->heap.size));
-    fprintf (stderr, 
+    fprintf (stderr,
              "[GC:\twith old-gen of size %s bytes (%.1f%% of heap),]\n",
              uintmaxToCommaString(s->heap.oldGenSize),
              100.0 * ((double)(s->heap.oldGenSize) / (double)(s->heap.size)));
@@ -133,20 +240,23 @@ void performGC (GC_state s,
   assert (invariantForGC (s));
   if (needGCTime (s))
     startTiming (&ru_start);
-  minorGC (s);
+//  minorGC (s);
   stackTopOk = invariantForMutatorStack (s);
-  stackBytesRequested = 
-    stackTopOk 
-    ? 0 
+  stackBytesRequested =
+    stackTopOk
+    ? 0
     : sizeofStackWithHeader (s, sizeofStackGrowReserved (s, getStackCurrent (s)));
-  totalBytesRequested = 
-    oldGenBytesRequested 
+  totalBytesRequested =
+    oldGenBytesRequested
     + nurseryBytesRequested
     + stackBytesRequested;
-  if (forceMajor 
-      or totalBytesRequested > s->heap.size - s->heap.oldGenSize)
-    majorGC (s, totalBytesRequested, mayResize);
-  setGCStateCurrentHeap (s, oldGenBytesRequested + stackBytesRequested, 
+  if (forceMajor
+      or totalBytesRequested > s->heap.size - s->heap.oldGenSize) {
+//    majorGC (s, totalBytesRequested, mayResize);
+      performUMGC(s, 3000, 0, true);
+  }
+
+  setGCStateCurrentHeap (s, oldGenBytesRequested + stackBytesRequested,
                          nurseryBytesRequested);
   assert (hasHeapBytesFree (s, oldGenBytesRequested + stackBytesRequested,
                             nurseryBytesRequested));
@@ -155,22 +265,22 @@ void performGC (GC_state s,
   setGCStateCurrentThreadAndStack (s);
   if (needGCTime (s)) {
     gcTime = stopTiming (&ru_start, &s->cumulativeStatistics.ru_gc);
-    s->cumulativeStatistics.maxPauseTime = 
+    s->cumulativeStatistics.maxPauseTime =
       max (s->cumulativeStatistics.maxPauseTime, gcTime);
   } else
     gcTime = 0;  /* Assign gcTime to quell gcc warning. */
   if (DEBUG or s->controls.messages) {
     size_t nurserySize = s->heap.size - (size_t)(s->heap.nursery - s->heap.start);
-    fprintf (stderr, 
+    fprintf (stderr,
              "[GC: Finished gc #%s; time %s ms,]\n",
              uintmaxToCommaString(s->cumulativeStatistics.numGCs),
              uintmaxToCommaString(gcTime));
-    fprintf (stderr, 
+    fprintf (stderr,
              "[GC:\theap at "FMTPTR" of size %s bytes (+ %s bytes card/cross map),]\n",
              (uintptr_t)(s->heap.start),
              uintmaxToCommaString(s->heap.size),
              uintmaxToCommaString(s->heap.withMapsSize - s->heap.size));
-    fprintf (stderr, 
+    fprintf (stderr,
              "[GC:\twith old-gen of size %s bytes (%.1f%% of heap),]\n",
              uintmaxToCommaString(s->heap.oldGenSize),
              100.0 * ((double)(s->heap.oldGenSize) / (double)(s->heap.size)));
@@ -185,30 +295,28 @@ void performGC (GC_state s,
     if (DEBUG_SIGNALS)
       fprintf (stderr, "GC Signal pending.\n");
     s->signalsInfo.gcSignalPending = TRUE;
-    unless (s->signalsInfo.amInSignalHandler) 
+    unless (s->signalsInfo.amInSignalHandler)
       s->signalsInfo.signalIsPending = TRUE;
   }
-  if (DEBUG) 
+  if (DEBUG)
     displayGCState (s, stderr);
   assert (hasHeapBytesFree (s, oldGenBytesRequested, nurseryBytesRequested));
   assert (invariantForGC (s));
   leaveGC (s);
 }
 
+
 void ensureInvariantForMutator (GC_state s, bool force) {
-  if (force
-      or not (invariantForMutatorFrontier(s))
-      or not (invariantForMutatorStack(s))) {
-    /* This GC will grow the stack, if necessary. */
+    force = true;
     performGC (s, 0, getThreadCurrent(s)->bytesNeeded, force, TRUE);
-  }
-  assert (invariantForMutatorFrontier(s));
-  assert (invariantForMutatorStack(s));
+
+    assert (invariantForMutatorFrontier(s));
+    assert (invariantForMutatorStack(s));
 }
 
-/* ensureHasHeapBytesFree (s, oldGen, nursery) 
+/* ensureHasHeapBytesFree (s, oldGen, nursery)
  */
-void ensureHasHeapBytesFree (GC_state s, 
+void ensureHasHeapBytesFree (GC_state s,
                              size_t oldGenBytesRequested,
                              size_t nurseryBytesRequested) {
   assert (s->heap.nursery <= s->limitPlusSlop);
@@ -218,7 +326,7 @@ void ensureHasHeapBytesFree (GC_state s,
   assert (hasHeapBytesFree (s, oldGenBytesRequested, nurseryBytesRequested));
 }
 
-void GC_collect (GC_state s, size_t bytesRequested, bool force) {
+void GC_collect_real(GC_state s, size_t bytesRequested, bool force) {
   enter (s);
   /* When the mutator requests zero bytes, it may actually need as
    * much as GC_HEAP_LIMIT_SLOP.
@@ -231,4 +339,22 @@ void GC_collect (GC_state s, size_t bytesRequested, bool force) {
   assert (invariantForMutatorFrontier(s));
   assert (invariantForMutatorStack(s));
   leave (s);
+
+  if (DEBUG_MEM) {
+      fprintf(stderr, "GC_collect done\n");
+  }
+}
+
+void GC_collect (GC_state s, size_t bytesRequested, bool force) {
+    if (!force) {
+        if ((s->fl_chunks > 2000) &&
+            (s->fl_array_chunks > 1000000))
+            return;
+    }
+
+    if (s->gc_module == GC_NONE) {
+        return;
+    }
+
+    GC_collect_real(s, bytesRequested, true);
 }

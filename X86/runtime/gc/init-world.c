@@ -99,18 +99,46 @@ void initWorld (GC_state s) {
   for (i = 0; i < s->globalsLength; ++i)
     s->globals[i] = BOGUS_OBJPTR;
   s->lastMajorStatistics.bytesLive = sizeofInitialBytesLive (s);
-  createHeap (s, &s->heap,
-              sizeofHeapDesired (s, s->lastMajorStatistics.bytesLive, 0),
-              s->lastMajorStatistics.bytesLive);
+
+  /* alloc um first so normal heap can expand without overrunning us */
+
+
+#define MEGABYTES 1024*1024
+#define MEM_AVAILABLE 1024
+  size_t avail_mem = s->controls.maxHeap ? s->controls.maxHeap : (MEM_AVAILABLE * MEGABYTES);
+  createUMHeap (s, &s->umheap, avail_mem, avail_mem);
+
+  createUMArrayHeap (s, &s->umarheap, avail_mem, avail_mem);
+
+  createHeap (s, &s->heap, 100*MEGABYTES, 100*MEGABYTES);
+
+  createHeap (s, &s->infHeap, 100*MEGABYTES, 100*MEGABYTES);
+//              sizeofHeapDesired (s, s->lastMajorStatistics.bytesLive, 0),
+//               s->lastMajorStatistics.bytesLive);
+//              sizeofHeapDesired (s, s->lastMajorStatistics.bytesLive, 0),
+//              s->lastMajorStatistics.bytesLive);
+  s->gc_module = GC_UM;
   setCardMapAndCrossMap (s);
   start = alignFrontier (s, s->heap.start);
+  s->umarfrontier = s->umarheap.start;
   s->frontier = start;
+  s->infFrontier = s->infHeap.start;
   s->limitPlusSlop = s->heap.start + s->heap.size;
   s->limit = s->limitPlusSlop - GC_HEAP_LIMIT_SLOP;
   initVectors (s);
   assert ((size_t)(s->frontier - start) <= s->lastMajorStatistics.bytesLive);
   s->heap.oldGenSize = (size_t)(s->frontier - s->heap.start);
   setGCStateCurrentHeap (s, 0, 0);
+
+  GC_UM_Chunk next_chunk = NULL;
+  next_chunk = allocNextChunk(s, &(s->umheap));
+  next_chunk->next_chunk = NULL;
+  s->umfrontier = (Pointer) next_chunk->ml_object;
+
+
   thread = newThread (s, sizeofStackInitialReserved (s));
   switchToThread (s, pointerToObjptr((pointer)thread - offsetofThread (s), s->heap.start));
+  if (DEBUG_MEM) {
+      fprintf(stderr, "UMFrontier start: "FMTPTR"\n", (uintptr_t)(s->umfrontier));
+  }
 }

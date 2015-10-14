@@ -113,7 +113,6 @@ structure Facts =
                                | _ => Error.bug "MatchCompile.Facts.bind: Tuple:wrong fact")
                    | Var y => Env.extend (env, y, x)
                    | Wild => env
-                   | NestedPat.Or _ => Error.bug "MatchCompile.factbind: or pattern shouldn't be here"
                end
             val env = loop (p, x, Env.empty)
             val () = destroy ()
@@ -206,7 +205,6 @@ structure Pat =
                 | NestedPat.Tuple ps => Tuple (Vector.map (ps, loop))
                 | NestedPat.Var _ => Wild
                 | NestedPat.Wild => Wild
-                | NestedPat.Or _ => Error.bug "MatchCompile.fromNestedPat: or pattern shouldn't be here"
          in
             loop
          end
@@ -761,31 +759,6 @@ fun matchCompile {caseType: Type.t,
    end
 
 val matchCompile =
-   fn {caseType: Type.t,
-       cases: (NestedPat.t * ((Var.t -> Var.t) -> Exp.t)) vector,
-       conTycon: Con.t -> Tycon.t,
-       region: Region.t,
-       test: Var.t,
-       testType: Type.t,
-       tyconCons: Tycon.t -> {con: Con.t,
-                              hasArg: bool} vector} =>
-   let
-      val cases =
-         Vector.map
-         (cases, fn (npat, mk) =>
-          Vector.map (NestedPat.flatten npat, fn fpat => (fpat, mk)))
-      val cases = Vector.concatV cases
-   in
-      matchCompile {caseType = caseType,
-                    cases = cases,
-                    conTycon = conTycon,
-                    region = region,
-                    test = test,
-                    testType = testType,
-                    tyconCons = tyconCons}
-   end
-
-val matchCompile =
    Trace.trace
    ("MatchCompile.matchCompile",
     fn {caseType, cases, test, testType, ...} =>
@@ -797,4 +770,3 @@ val matchCompile =
    matchCompile
 
 end
-

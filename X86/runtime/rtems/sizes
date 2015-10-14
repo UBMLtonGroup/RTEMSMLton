@@ -6,3 +6,4 @@ header = 4
 mplimb = 4
 objptr = 4
 seqIndex = 4
+objChunkSize = 34
