@@ -1,3 +1,4 @@
+fl_chunks_Offset = 28
 stackTop_Offset = 16
 stackLimit_Offset = 20
 stackBottom_Offset = 612
@@ -12,6 +13,7 @@ exnStack_Offset = 24
 sourceMaps.curSourceSeqsIndex_Offset = 568
 currentThread_Offset = 332
 atomicState_Offset = 52
+fl_chunks_Size = 4
 stackTop_Size = 4
 stackLimit_Size = 4
 stackBottom_Size = 4

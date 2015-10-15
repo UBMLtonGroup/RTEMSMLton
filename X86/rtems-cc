@@ -1,0 +1,7 @@
+#!/bin/bash
+RTEMS="/mnt/work/RTEMS/rtems/i386-rtems4.10/pc386/lib"
+GMP="/mnt/work/RTEMS/gmp-install"
+GMP_LIB="$GMP/lib"
+i386-rtems4.10-gcc -Ibuild/lib/include -Ibuild/lib/targets/i386-rtems4.10/include \
+    -pipe -B$RTEMS -specs bsp_specs -qrtems -g -Wall -msoft-float -B$GMP -Wl,-Ttext,0x00100000 \
+    -mtune=i386 -DNO_FENV_H -L$GMP_LIB $@ -Lruntime -lmlton

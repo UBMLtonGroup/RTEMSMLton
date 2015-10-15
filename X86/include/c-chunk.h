@@ -30,10 +30,14 @@
 #define GCState ((Pointer)&gcState)
 #define ExnStack *(size_t*)(GCState + ExnStackOffset)
 #define FrontierMem *(Pointer*)(GCState + FrontierOffset)
-#define Frontier frontier
+#define UMFrontierMem *(Pointer*)(GCState + UMFrontierOffset)
+#define Frontier *(Pointer*)(GCState + FrontierOffset)
+// frontier
+#define UMFrontier *(Pointer*)(GCState + UMFrontierOffset)
+// umfrontier
 #define StackBottom *(Pointer*)(GCState + StackBottomOffset)
 #define StackTopMem *(Pointer*)(GCState + StackTopOffset)
-#define StackTop stackTop
+#define StackTop StackTopMem
 
 /* ------------------------------------------------- */
 /*                      Memory                       */
@@ -43,8 +47,10 @@
 #define G(ty, i) (global##ty [i])
 #define GPNR(i) G(ObjptrNonRoot, i)
 #define O(ty, b, o) (*(ty*)((b) + (o)))
-#define X(ty, b, i, s, o) (*(ty*)((b) + ((i) * (s)) + (o)))
+// #define X(ty, b, i, s, o) (*(ty*)((b) + ((i) * (s)) + (o)))
+#define X(ty, gc_stat, b, i, s, o) (*(ty*)(UM_Array_offset((gc_stat), (b), (i), (s), (o))))
 #define S(ty, i) *(ty*)(StackTop + (i))
+#define CHOFF(gc_stat, ty, b, o, s) (*(ty*)(UM_CPointer_offset((gc_stat), (b), (o), (s))))
 
 /* ------------------------------------------------- */
 /*                       Tests                       */
@@ -70,22 +76,24 @@
 
 #define FlushFrontier()                         \
         do {                                    \
-                FrontierMem = Frontier;         \
+                /* FrontierMem = Frontier; */     \
+               /* UMFrontierMem = UMFrontier; */     \
         } while (0)
 
 #define FlushStackTop()                         \
         do {                                    \
-                StackTopMem = StackTop;         \
+                /* StackTopMem = StackTop; */        \
         } while (0)
 
 #define CacheFrontier()                         \
         do {                                    \
-                Frontier = FrontierMem;         \
+                /* Frontier = FrontierMem; */    \
+                /* UMFrontier = UMFrontierMem; */     \
         } while (0)
 
 #define CacheStackTop()                         \
         do {                                    \
-                StackTop = StackTopMem;         \
+                /*StackTop = StackTopMem;*/         \
         } while (0)
 
 /* ------------------------------------------------- */
@@ -96,14 +104,15 @@
 #define Chunk(n)                                                \
         DeclareChunk(n) {                                       \
                 struct cont cont;                               \
-                register unsigned int frontier asm("g5");       \
+                /* register unsigned int frontier asm("g5"); */       \
                 uintptr_t l_nextFun = nextFun;                  \
                 register unsigned int stackTop asm("g6");
 #else
 #define Chunk(n)                                \
         DeclareChunk(n) {                       \
                 struct cont cont;               \
-                Pointer frontier;               \
+     /*          Pointer frontier;  */             \
+     /*          Pointer umfrontier; */              \
                 uintptr_t l_nextFun = nextFun;  \
                 Pointer stackTop;
 #endif
