@@ -13,8 +13,8 @@ Compiling:
 5. First, run ./compile.sh (Dont't worry it fails.. it fails at where it should)
 6. Compile ./compile-rtems.sh
 7. Now you can compile your program as:
-~~~
-./rtems-compile.sh filename.sml
-~~~
+
+    ./rtems-compile.sh filename.sml
+
 8. You need to allocate 4G memory for qemu. The rtems-run.sh script wraps the 
    command and can be used to run the compiled image 
