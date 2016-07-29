@@ -14,26 +14,25 @@ This is a port of MLton to RTEMS X86.
 
 ## Compiling:
 
-1. Make sure you have installed RTEMS. See RTEMS 
-   [quick start guide](https://devel.rtems.org/wiki/TBR/UserManual/Quick_Start).
-   The recommended version is *Rtems 4.10*.
-2. Compile [GNU GMP](https://gmplib.org/) using RTEMS toolchains.
-3. Edit compile-rtems.sh,set RTEMS to the lib dir of your RTEMS installation. Set
-   GMP to your GMP installation.
-4. Edit rtems-mlton, set GMP to your GMP installation dir, GMP\_LIB to the lib dir
-   of your GMP installation, RTEMS to your RTEMS installation's lib dir.
-5. Compiling:
+1. Make sure you have installed RTEMS.
+	a. Automatic installation: 
+		a. install [Virtualbox](virtualbox.org) 
+		a. install [Vagrant](https://www.vagrantup.com/downloads.html)
+		a. type ```vagrant up```
+		a. type ```vagrant ssh```  
+	a. Manual installation: 
+		a. See RTEMS 
+   [quick start guide](https://devel.rtems.org/wiki/TBR/UserManual/Quick_Start). The recommended version is *Rtems 4.10*.
+		a. Compile [GNU GMP](https://gmplib.org/) using RTEMS toolchains.
+		a. Edit ```compile-rtems.sh```, set ```RTEMS``` to the lib dir of your RTEMS installation. Set ```GMP``` to your GMP installation.
+		a. Edit ```rtems-mlton```, set ```GMP``` to your GMP installation dir, ```GMP\_LIB``` to the lib dir of your GMP installation, ```RTEMS``` to your RTEMS installation's lib dir.
+		a. Compile: ```./compile.sh``` and ```./compile-rtems.sh```
 
-    ./compile.sh
-    ./compile-rtems.sh
-
-6. Now you type:
-
-    ./build/bin/mlton -help
+1. Now you type:
+```./build/bin/mlton -help```
 
    you should see i386-rtems4.10 in the target part.
-7. Test your program:
-   
-    ./build/bin/mlton -codegen c -target i386-rtems4.10 hello.sml
-    qemu-system-i386 -kernel hello
+1. Test your program: ```./build/bin/mlton -codegen c -target i386-rtems4.10 hello.sml qemu-system-i386 -kernel hello```
+
+
 

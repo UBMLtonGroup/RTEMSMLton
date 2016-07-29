@@ -35,7 +35,7 @@ EXE :=
 
 # These flags can be overridden by the user
 CPPFLAGS :=
-CFLAGS := -O2
+CFLAGS := -O2 
 
 WARNXCFLAGS :=
 WARNXCFLAGS += -pedantic -Wall
@@ -81,8 +81,8 @@ WARNXCFLAGS += -Wnested-externs
 # WARNXCFLAGS += -Wunreachable-code
 
 XCFLAGS := -fno-common $(WARNXCFLAGS)
-OPTXCFLAGS := -Wdisabled-optimization -O2 -fomit-frame-pointer
-DEBUGXCFLAGS := -DASSERT=1 -Wno-uninitialized -O0 -g
+OPTXCFLAGS := -Wdisabled-optimization
+DEBUGXCFLAGS := -DASSERT=1 -Wno-uninitialized -O2
 PICXCFLAGS :=
 
 # Win32&64 don't use PIC code, all other platforms do
@@ -102,7 +102,7 @@ XCFLAGS += -mieee -mbwx -mtune=ev6 -mfp-rounding-mode=d
 endif
 
 ifeq ($(TARGET_ARCH), amd64)
-XCFLAGS += -m64
+    XCFLAGS += -m64
 endif
 
 ifeq ($(findstring $(TARGET_ARCH), hppa ia64 powerpc sparc),$(TARGET_ARCH))
@@ -202,10 +202,14 @@ c-types.h: gen/c-types.h
 	cp $< $@
 ml-types.h: gen/ml-types.h
 	cp $< $@
-gen/c-types.h gen/c-types.sml gen/ml-types.h:
-	cp rtems/c-types.sml gen/
-	cp rtems/ml-types.h gen/
-	cp rtems/c-types.h gen/
+gen/c-types.h gen/c-types.sml gen/ml-types.h: gen/gen-types.stamp
+	@touch $@
+gen/gen-types.stamp: gen/gen-types.c util.h util.o
+	$(CC) $(OPTCFLAGS) -o gen/gen-types gen/gen-types.c util.o
+	rm -f gen/c-types.h gen/c-types.sml gen/ml-types.h gen/gen-types.stamp
+	cd gen && ./gen-types
+	rm -f gen/gen-types$(EXE) gen/gen-types
+	touch $@
 
 ### basis-ffi.h  gen/basis-ffi.sml ###
 
@@ -250,15 +254,20 @@ gdtoa/gdtoa.h $(GDTOACFILES): gdtoa/README
 gdtoa/arithchk.c: gdtoa/README
 	@touch $@
 
-gdtoa/arith.h: 
-	cp rtems/arith.h gdtoa/arith.h
-#	cd gdtoa && ./arithchk.out >arith.h
+gdtoa/arithchk.out: gdtoa/arithchk.c
+	cd gdtoa && $(CC) $(OPTCFLAGS) -w -O1 -o arithchk.out arithchk.c
+
+gdtoa/arith.h: gdtoa/arithchk.out
+	cd gdtoa && ./arithchk.out >arith.h
 
 gdtoa/qnan.c: gdtoa/README
 	@touch $@
 
-gdtoa/gd_qnan.h: 
-	cp rtems/gd_qnan.h gdtoa
+gdtoa/qnan.out: gdtoa/arith.h gdtoa/qnan.c
+	cd gdtoa && $(CC) $(OPTCFLAGS) -w -O1 -o qnan.out qnan.c
+
+gdtoa/gd_qnan.h: gdtoa/qnan.out
+	cd gdtoa && ./qnan.out >gd_qnan.h
 
 gdtoa/%-pic.o: gdtoa/%.c gdtoa/arith.h gdtoa/gd_qnan.h
 	$(CC) $(PICCFLAGS) -w -DINFNAN_CHECK -c -o $@ $<
@@ -353,8 +362,15 @@ libmlton-pic.a: $(MLTON_PIC_OBJS)
 
 ### gen/sizes ###
 
-gen/sizes:
-	cp rtems/sizes gen/
+gen/sizes: gen/gen-sizes.stamp
+	@touch $@
+gen/gen-sizes.stamp: gen/gen-sizes.c libmlton.a $(HFILES)
+	$(CC) $(OPTCFLAGS) -o gen/gen-sizes gen/gen-sizes.c -L. -lmlton
+	rm -f gen/sizes
+	cd gen && ./gen-sizes
+	rm -f gen/gen-sizes$(EXE) gen/gen-sizes
+	touch $@
+
 
 ######
 
