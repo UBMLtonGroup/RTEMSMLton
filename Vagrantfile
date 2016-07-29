@@ -25,7 +25,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   echo -e "net.ipv6.conf.all.disable_ipv6 = 1\nnet.ipv6.conf.default.disable_ipv6 = 1\nnet.ipv6.conf.lo.disable_ipv6 = 1\n" >> /etc/sysctl.conf
   sysctl -p
   apt-get update -y
-  apt-get install -y python-pip build-essential python-dev libffi-dev git bison cvs g++ flex python-dev zlib1g-dev libncurses-dev  unzip automake autoconf qemu
+  apt-get install -y python-pip build-essential python-dev libffi-dev git bison cvs g++ flex python-dev zlib1g-dev libncurses-dev  unzip automake autoconf qemu lzip
   cd /tmp
   wget http://ftp.gnu.org/gnu/texinfo/texinfo-4.13.tar.gz
   gzip -dc < texinfo-4.13.tar.gz | tar -xf -
@@ -37,6 +37,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   echo " " >> /etc/ssh/sshd_config
   echo X11UseLocalhost no >> /etc/ssh/sshd_config
   restart ssh
+  cd /tmp
+  wget https://gmplib.org/download/gmp/gmp-6.1.1.tar.lz
+  lzip -d gmp-6.1.1.tar.lz
+  tar -xf gmp-6.1.1.tar
+  cd gmp-6.1.1
+  ./configure --prefix=/usr/local
+  make
+  make install
 SCRIPT
 
   $nonrootscript = <<SCRIPT

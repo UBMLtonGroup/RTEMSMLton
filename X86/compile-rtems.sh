@@ -1,6 +1,8 @@
 RTEMS="/home/vagrant/development/rtems/4.10/i386-rtems4.10/pc386/lib"
 GMP="/mnt/work/RTEMS/gmp-install"
 
+PATH=${PATH}:/home/vagrant/development/rtems/4.10/bin
+
 cp runtime/Makefile.rtems runtime/Makefile
 cd runtime && make clean && cd ..
 
