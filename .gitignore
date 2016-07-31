@@ -1,3 +1,5 @@
 *~
 /build/
 /install/
+X86/build/**
+.vagrant/**
