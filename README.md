@@ -32,7 +32,7 @@ This is a port of MLton to RTEMS X86.
 ```./build/bin/mlton -help```
 
    you should see i386-rtems4.10 in the target part.
-1. Test your program: ```./build/bin/mlton -codegen c -target i386-rtems4.10 hello.sml qemu-system-i386 -kernel hello```
+1. Test your program: ```./build/bin/mlton -codegen c -target i386-rtems4.10 hello.sml``` and then ```qemu-system-i386 -kernel hello```
 
 
 
