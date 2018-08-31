@@ -1,1 +1,1 @@
-structure Socket = Pervasive.Socket
+(*structure Socket = Pervasive.Socket*)

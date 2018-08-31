@@ -133,8 +133,8 @@ signature BASIS_2002 =
       structure BoolVectorSlice : MONO_VECTOR_SLICE
       structure CharArray2 : MONO_ARRAY2
       structure FixedInt : INTEGER
-      structure GenericSock : GENERIC_SOCK
-      structure INetSock : INET_SOCK
+      (*structure GenericSock : GENERIC_SOCK
+      structure INetSock : INET_SOCK*)
       structure Int1: INTEGER
       structure Int2: INTEGER
       structure Int3: INTEGER
@@ -209,9 +209,9 @@ signature BASIS_2002 =
       structure LargeWordArraySlice : MONO_ARRAY_SLICE
       structure LargeWordVector : MONO_VECTOR
       structure LargeWordVectorSlice : MONO_VECTOR_SLICE
-      structure NetHostDB : NET_HOST_DB
+      (*structure NetHostDB : NET_HOST_DB
       structure NetProtDB : NET_PROT_DB
-      structure NetServDB : NET_SERV_DB
+      structure NetServDB : NET_SERV_DB*)
       structure PackReal32Big : PACK_REAL
       structure PackReal32Little : PACK_REAL
       structure PackReal64Big : PACK_REAL
@@ -242,10 +242,10 @@ signature BASIS_2002 =
       structure RealArraySlice : MONO_ARRAY_SLICE
       structure RealVector : MONO_VECTOR
       structure RealVectorSlice : MONO_VECTOR_SLICE
-      structure Socket : SOCKET
+      (*structure Socket : SOCKET*)
       structure SysWord : WORD
       structure Unix : UNIX
-      structure UnixSock : UNIX_SOCK
+      (*structure UnixSock : UNIX_SOCK*)
       structure WideChar : CHAR
       structure WideCharArray : MONO_ARRAY
       structure WideCharArray2 : MONO_ARRAY2

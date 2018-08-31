@@ -78,7 +78,7 @@ structure Int
 (* structure Int32 *)
 structure IntInf
 structure InsertionSort
-structure INetSock
+(*structure INetSock*)
 structure Iterate
 structure Itimer
 structure Justify
@@ -127,7 +127,7 @@ structure Result
 structure Sexp
 structure Signal
 structure SMLofNJ
-structure Socket
+(*structure Socket*)
 structure Stream
 structure String
 structure StringCvt

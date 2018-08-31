@@ -134,8 +134,8 @@ signature BASIS_EXTRA =
       structure BoolVectorSlice : MONO_VECTOR_SLICE
       structure CharArray2 : MONO_ARRAY2
       structure FixedInt : INTEGER
-      structure GenericSock : GENERIC_SOCK
-      structure INetSock : INET_SOCK
+(*      structure GenericSock : GENERIC_SOCK
+      structure INetSock : INET_SOCK*)
       structure IntArray : MONO_ARRAY
       structure IntArray2 : MONO_ARRAY2
       structure IntArraySlice : MONO_ARRAY_SLICE
@@ -215,9 +215,9 @@ signature BASIS_EXTRA =
       structure LargeWordArraySlice : MONO_ARRAY_SLICE
       structure LargeWordVector : MONO_VECTOR
       structure LargeWordVectorSlice : MONO_VECTOR_SLICE
-      structure NetHostDB : NET_HOST_DB
+(*      structure NetHostDB : NET_HOST_DB
       structure NetProtDB : NET_PROT_DB
-      structure NetServDB : NET_SERV_DB
+      structure NetServDB : NET_SERV_DB*)
       structure PackReal32Big : PACK_REAL
       structure PackReal32Little : PACK_REAL
       structure PackReal64Big : PACK_REAL
@@ -248,10 +248,10 @@ signature BASIS_EXTRA =
       structure Real64ArraySlice : MONO_ARRAY_SLICE
       structure Real64Vector : MONO_VECTOR
       structure Real64VectorSlice : MONO_VECTOR_SLICE
-      structure Socket : SOCKET
+(*      structure Socket : SOCKET*)
       structure SysWord : WORD
       structure Unix : UNIX
-      structure UnixSock : UNIX_SOCK
+(*      structure UnixSock : UNIX_SOCK*)
       structure WideChar : CHAR
       structure WideCharArray : MONO_ARRAY
       structure WideCharArray2 : MONO_ARRAY2
@@ -770,19 +770,19 @@ signature BASIS_EXTRA =
    where type IEEEReal.real_order = IEEEReal.real_order
    where type IEEEReal.float_class = IEEEReal.float_class
    where type IEEEReal.rounding_mode = IEEEReal.rounding_mode
-   where type NetHostDB.in_addr = NetHostDB.in_addr
-   where type NetHostDB.addr_family = NetHostDB.addr_family
+(*   where type NetHostDB.in_addr = NetHostDB.in_addr
+   where type NetHostDB.addr_family = NetHostDB.addr_family*)
    where type OS.IO.iodesc = OS.IO.iodesc (* PRIM_IO, POSIX_FILE_SYS *)
    where type OS.Process.status = OS.Process.status (* UNIX, POSIX_PROCESS *)
    where type Position.int = Position.int
    where type Posix.IO.file_desc = Posix.IO.file_desc
    where type Posix.Process.exit_status = Posix.Process.exit_status
    where type Posix.Signal.signal = Posix.Signal.signal
-   where type Socket.dgram = Socket.dgram
+(*   where type Socket.dgram = Socket.dgram
    where type ('a, 'b) Socket.sock = ('a, 'b) Socket.sock
    where type 'a Socket.sock_addr = 'a Socket.sock_addr
    where type Socket.SOCK.sock_type = Socket.SOCK.sock_type (* GENERIC_SOCK *)
-   where type 'a Socket.stream = 'a Socket.stream
+   where type 'a Socket.stream = 'a Socket.stream*)
    where type StringCvt.radix = StringCvt.radix
    where type StringCvt.realfmt = StringCvt.realfmt
 (*

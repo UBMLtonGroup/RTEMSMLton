@@ -320,7 +320,7 @@ in
    ../system/timer.sig
    ../system/timer.sml
 
-   ../net/net.sig
+   (*../net/net.sig
    ../net/net.sml
    ../net/net-host-db.sig
    ../net/net-host-db.sml
@@ -335,7 +335,7 @@ in
    ../net/inet-sock.sig
    ../net/inet-sock.sml
    ../net/unix-sock.sig
-   ../net/unix-sock.sml
+   ../net/unix-sock.sml*)
 
    ../mlton/platform.sig
    ../mlton/platform.sml

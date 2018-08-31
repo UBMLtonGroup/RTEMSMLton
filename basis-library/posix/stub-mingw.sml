@@ -126,7 +126,7 @@ in
                   end
             end
 
-         structure Socket =
+         (*structure Socket =
             struct
                open Socket
 
@@ -137,6 +137,6 @@ in
                      val toAddr = stub ("toAddr", toAddr)
                      val fromAddr = stub ("fromAddr", fromAddr)
                   end
-            end
+            end*)
       end
 end
