@@ -213,6 +213,7 @@ $ make PREFIX=/opt/mlton install
 == Resources
 
  * `http://mlton.org`
+ * `https://www.rtems.org`
  * mailing lists
    - `MLton-devel@mlton.org` -- MLton developers
      (https://sourceforge.net/mailarchive/forum.php?forum_name=mlton-devel[archive],

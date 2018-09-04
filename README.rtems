@@ -1,0 +1,196 @@
+# PART 1: Building rtems / qemu / gmp / mlton
+
+
+
+# pre-reqs: 
+
+# - you might have to enable source code repositories.  In Mint it's in Software Sources.	
+    sudo apt-get build-dep gcc g++ gdb unzip pax
+    sudo apt-get install python2.7-dev git	libglib2.0-dev libpixman-1-dev libsdl2-dev
+
+# rtems:
+	
+# - we have to do two things, build the toolchain for an architecture, and then build one or more BSPs (board support packages) using the toolchain.
+# - building the toolchain requires an internet connection.
+	mkdir -p rtems-dev/rtems
+	cd rtems-dev/rtems
+	git clone git://git.rtems.org/rtems-source-builder.git rsb
+	cd rsb
+	git checkout -b 4.11 origin/4.11
+	./source-builder/sb-check  # it'll tell you whether or not you're all set to build rtems
+	cd rtems
+	../source-builder/sb-set-builder --log=rsb-i386-build.log --prefix=/home/$(whoami)/rtems-dev/rtems/4.11 4.11/rtems-i386
+	
+# - this takes a good 30-45 minutes depending on how fast your machine is (likely much longer if running in a vm)
+# - once that's done we have to build a BSP, but first we'll have to set our PATH so that the new toolchain is found.
+	
+	export PATH=/home/$(whoami)/rtems-dev/rtems/4.11/bin:$PATH
+	
+	cd ../../
+	git clone git://git.rtems.org/rtems.git rtems-src
+	cd rtems-src
+	git checkout -b 4.11 origin/4.11
+	./bootstrap -c && ./bootstrap -p && ./bootstrap
+# - rtems suggests using sb-bootstrap from the source builder repo, but both achieve the same effect.  The difference is that sb-bootstrap will run everything in parallel.
+	cd ..
+	mkdir rtems-4.11-host
+	mkdir rtems-builds
+	
+# before we continue, running regressions is a little bit difficult with the vanilla rtems code.  Normally, when the program exits we get a nice "press any key to continue" prompt.
+# Since we'll want to run regressions automatically, we don't want that prompt.
+# Open the file "bspclean.c" in rtems-src/c/src/lib/libbsp/shared/ and change this line:
+#	#if (BSP_PRESS_KEY_FOR_REST)
+# to:
+#	#if (0)
+# or whatever floats your boat so that we don't get the prompt.
+# We're also going to change the dummy Init task so that program exit properly
+# Find the file default-configuration.c in rtems-src/cpukit/libmisc/dummy/default-configuration.c
+# Comment out or delete the line #define CONFIGURE_DISABLE_BSP_SETTINGS
+
+# - Now we can build the bsp!
+
+	cd rtems-builds
+	../rtems-src/configure --target=i386-rtems4.11 --enable-rtemsbsp=pc386 --enable-tests --enable-posix --enable-itron --enable-networking \ 
+	    --prefix=/home/$(whoami)/rtems-dev/rtems/rtems-4.11-host
+	make all
+	make install
+	
+# - Now just export the makefile path and you're good to go with rtems!
+# - NB:  The variable /must/ be named RTEMS_MAKEFILE_PATH, or else it won't work.
+
+	export RTEMS_MAKEFILE_PATH=/home/$(whoami)/rtems-dev/rtems/4.11/i386-rtems
+	
+# - (Optional) Clone the examples repository for simple reference programs and makefiles (I find these super helpful)
+
+    cd ~/rtems-dev
+	git clone git://git.rtems.org/examples-v2.git examples-rtems
+	cd examples-rtems
+	git checkout -b 4.11 origin/4.11
+	cd hello/hello_world_c/
+	make
+# - The program will be found in o-optimize/ as an exe file
+# - But now we need a way of running the program.  Rtems has an erc32 simulator but nothing for pc386, so we'll build qemu next.
+
+# qemu:
+
+	cd ~/rtems-dev
+	git clone https://github.com/qemu/qemu.git
+	cd qemu
+	mkdir build
+	cd build
+	../configure
+	make
+	make install
+	
+# - Now we can run the program we built earlier.  Since the executables contain the OS, we can use the -kernel flag to run the program. 
+#   For development we want qemu to output to console, which it does /not/ do by default.  It's a little tricky but it's only a couple of commands
+#   Note that -nographic doesn't work properly, and -curses doesn't lend itself well to saving the output.  We'd really like to get output on the console
+#   instead of copying it by hand (mainly for MLton).
+
+    qemu-system-i386 -append "--console=com1" -serial stdio -no-reboot -kernel o-optimize/test.exe
+		# -append "--console=com1" -> sends console output to com1 serial port
+		# -serial stdio -> sends serial data to stdio
+		# -no-reboot -> prevents qemu from rebooting when the program finishes execution
+		# -kernel -> sets the OS kernel to the file specified
+
+# gmp:
+
+# MLton needs GMP as part of its dependencies.  Specifically we need a gmp library cross-compiled for rtems /and our specific bsp/.
+# Get the gmp sources and configure the makefile:
+	./configure --prefix=/home/$(whoami)/rtems-dev/gmp-6.1.2-i386 --host=i386-rtems4.11 CPPFLAGS="-B/home/$(whoami)/rtems-dev/rtems/rtems-4.11-host/i386-rtems4.11/pc386/lib -specs bsp_specs -qrtems -mtune=i386 -Wl,-Ttext,0x00100000 -mtune=i386"
+	make && make install
+# Make check is unnecessary since we're not running natively
+
+# mlton:
+
+# First we're going to need a working version of mlton, if you don't already have one:
+	sudo apt-get install mlton
+	
+# next, get the mlton sources and build it (you can optionally install it over the 2013 version, which I choose to do)
+# this takes a while and needs a lot of memory, especially during the outputAssembly phase.  If you run out of memory you might get "Killed" on your console and will have to start over again
+	cd ~/rtems-dev/
+	git clone https://github.com/mlton/mlton.git mlton-rtems
+	cd mlton-rtems
+	make all
+	make PREFIX=/usr install	
+
+#-------------#
+PART 2: Adding rtems target in mlton
+
+#FOLLOWING PORTING MLTON GUIDE:
+
+#      in bin/mlton-script:
+#            - add these variables:
+                GMP="/home/mood/pickle/gmp-6.1.2-i386"
+                GMP_LIB="$GMP/lib"
+                RTEMS="/home/$/rtems-4.11-host/i386-rtems4.11/pc386/lib"
+                PATH="/home/mood/pickle/rtems3/4.11/bin:$PATH"
+#               add these cases for rtems near the bottom:
+                        -target-cc-opt rtems "-pipe -B$RTEMS -specs bsp_specs -qrtems -g -Wall -msoft-float -B$GMP -Wl,-Ttext,0x00100000 -mtune=i386 -DNO_FENV_H -L$GMP_LIB" \
+                        -target-link-opt rtems  "-pipe -B$RTEMS -specs bsp_specs -qrtems -g -Wall -msoft-float -B$GMP -Wl,-Ttext,0x00100000 -mtune=i386 -DNO_FENV_H -L$GMP_LIB" \
+#      add in case for HOST_OS rtems in bin/platform
+#      in runtime/platform.h add in case for rtems as the os (** in newer versions of mlton this is in cenv.h)
+#      the rtems_platform.h and rtems.c come from Bruce's work, with modifications to keep them more in line with linux.h, put these in runtime/platform/
+
+#      in basis-library/* edit primitive/prim-mlton.sml's OS structure to include the Rtems constructor and "rtems" => Rtems in the host function below
+#      in basis-library/mlton/platform.sig add a constructor for Rtems in the datatype for the OS structure
+#         platform.sml add (Rtems, "Rtems") in the OS structure
+#      in basis-library/sml-nj/sml-nj.sml modify getOSKind to include this pattern:  
+#           | Rtems => UNIX
+    
+#      in lib/stubs/mlton-stubs/platform.sig add in the Rtems constructor for the OS structure
+#      in lib/stubs/mlton-stubs/mlton.sml
+
+#      delete or move the folders Net and Process in runtime/basis/ and runtime/basis/MLton/ respectively.
+
+# Run make to rebuild the compiler and runtime (I'll push the makefile and note changes in there, but the main difference is that the programs that mlton uses to build the runtime stuff is run through qemu and stdout)
+
+# Other modifications:  
+
+#  The programs that mlton runs to build runtime information have to be modified slightly (this may be a problem on my machine).  When main() returns or exits, rtems won't shutdown.  
+#  Looking at the source, there's a dummy task that gets executed when the program's entry point is main().  It builds the argc and argv automatically and exits based on main's return value, but for whatever reason that doesn't work 
+#  properly unless you append the dummy task to the source file.
+
+#  The qemu emulators are piped into tee and tee waits to exit.  Piping to tee ended up being more consistent.
+
+
+# BUILDING THE CONSTANTS FILE:
+
+# The issue of rebuilding the basis library or just ignoring it in the runtime until things blow up:
+    # So mlton won't complain right away if your constants file is missing entries, but if we need them at some point, the program will fail to compile.  This is /probably/ going to be fine for our intents and purposes.
+    # The alternative is to modify every basis library file that references any Socket, UnixSock, and NethostDB structure, and remove the references to these structures in basis-ffi.def.
+    # That's a little more painful but it's a viable route and certainly the more correct approach.  Since we're ignoring networking there shouldn't be any issues, but the error will look like this (socket.sml regression):
+        # unhandled exception: Fail: LookupConstants.load.lookupConstant: constant not found: Socket_sockAddrStorageLen
+# Anyway, build the constants file by doing: 
+    build/bin/mlton -target $TARGET -build-constants true > rtems-bc.c
+        # TARGET is whatever your target name is, mine was i386-rtems4.11.  The target's name is one of the folders in build/lib/mlton/targets (eg self, i386-rtems4.11, sparc-rtems4.11, etc) 
+# compile the c program (it will likely fail to compile):
+    build/bin/mlton -target $TARGET rtems-bc.c
+# If you have all the socket/net{host, serv, prot}DB structures then you'll get a bunch of errors.  Just remove the offending lines from the program and you should be able to get the constants file.
+
+# run the program using this command:
+    qemu-system-i386 -no-reboot -append "--console=com1" -serial stdio -kernel rtems-bc | tee build/lib/mlton/targets/i386-rtems4.11/constants
+
+#-------------#
+PART 3: Adding rtems code generator
+
+# Creating a slightly modified code generator for rtems:
+
+# Make copies of mlton/codegen/c-codegen/c-codegen.{fun, sig} and name them rtems-codegen.{fun, sig} or whatever you prefer
+# Rename all references to CCodegen and C_CODEGEN to RtemsCodegen and RTEMS_CODEGEN, respectively.
+# Add in the corresponding functor and signature lines in mlton/codegen/c-codegen/sources.mlb, along with the source files themselves
+# Add in the functor to mlton/codegen/sources.mlb too
+# I'm lazy so I just changed how the main function is written to file, which is around line 446
+    fun declareMain () = ...
+
+# The difference is that rtems wraps main() in the Init task so I just c/p'd the wrapper and changed some of the business
+
+# Add an application of the functor into compile.fun.  Just c/p the CCodegen structure and rename CCodegen to RtemsCodegen
+    # in the compile function, c/p the CCodegen pattern and rename to RtemsCodegen appropriately (line 770ish)
+    # Similar for the ssa2 makeMachine function, add a pattern for RtemsCodegens (val codegenImplementsPrim = ...)
+# Add an RtemsCodegen constructor in control-flags.sig and control-flags.sml (anywhere there's a reference to CCodegen, add in one for RtemsCodegen)
+# Trickiest part is in main/lookup-constant.fun.  Where it says "CCodegen => 0" for a pattern, add in "RtemsCodegen => 0".
+    # Any other number and the compiler can optimize out your whole program and throw a "toplevel handler not installed" exception.
+# Add "orelse !Control.codegen = Control.RtemsCodegen" in backend/backend.fun around line 332
+
+# Basically just add something for RtemsCodegen wherever you see "CCodegen".  I just grepped for ccodegen and figured it out that way.
