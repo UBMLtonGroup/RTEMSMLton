@@ -993,7 +993,9 @@ fun commandLine (args: string list): unit =
       val () =
          codegen := (case !explicitCodegen of
                         NONE =>
-                           if hasCodegen AMD64Codegen
+                           if targetOS = Rtems
+                              then RtemsCodegen
+                           else if hasCodegen AMD64Codegen
                               then AMD64Codegen
                            else if hasCodegen X86Codegen
                               then X86Codegen
@@ -1154,6 +1156,7 @@ fun commandLine (args: string list): unit =
                          AMD64Codegen => ChunkPerFunc
                        | CCodegen => Coalesce {limit = 4096}
                        | LLVMCodegen => Coalesce {limit = 4096}
+                       | RtemsCodegen => Coalesce {limit = 4096}
                        | X86Codegen => ChunkPerFunc
                        )
            | SOME c => c)
@@ -1185,6 +1188,7 @@ fun commandLine (args: string list): unit =
           | FreeBSD => ()
           | HPUX => ()
           | Linux => ()
+          | Rtems => ()
           | MinGW => ()
           | NetBSD => ()
           | OpenBSD => ()

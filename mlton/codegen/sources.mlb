@@ -17,4 +17,5 @@ in
    functor CCodegen
    functor LLVMCodegen
    functor x86Codegen
+   functor RtemsCodegen
 end

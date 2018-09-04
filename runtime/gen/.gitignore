@@ -10,3 +10,6 @@
 /gen-types.stamp
 /ml-types.h
 /sizes
+/gen-types-ml
+/gen-types-ch
+/gen-types-csml

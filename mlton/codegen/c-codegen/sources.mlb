@@ -8,13 +8,17 @@
 
 local
    ../../../lib/mlton/sources.mlb
+   ../../../lib/mlton/pervasive/sources.mlb
    ../../atoms/sources.mlb
    ../../control/sources.mlb
    ../../backend/sources.mlb
-
+   default-configuration.sml
    c-codegen.sig
    c-codegen.fun
+   rtems-codegen.sig
+   rtems-codegen.fun
 in
    signature C_CODEGEN
    functor CCodegen
+   functor RtemsCodegen
 end

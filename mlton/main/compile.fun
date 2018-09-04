@@ -93,6 +93,8 @@ structure Backend = Backend (structure Ssa = Ssa2
                              fun funcToLabel f = f)
 structure CCodegen = CCodegen (structure Ffi = Ffi
                                structure Machine = Machine)
+structure RtemsCodegen = RtemsCodegen (structure Ffi = Ffi
+                               structure Machine = Machine)
 structure LLVMCodegen = LLVMCodegen (structure CCodegen = CCodegen
                                      structure Machine = Machine)
 structure x86Codegen = x86Codegen (structure CCodegen = CCodegen
@@ -643,6 +645,7 @@ fun makeMachine ssa2 =
          case !Control.codegen of
             Control.AMD64Codegen => amd64Codegen.implementsPrim
           | Control.CCodegen => CCodegen.implementsPrim
+          | Control.RtemsCodegen => RtemsCodegen.implementsPrim
           | Control.LLVMCodegen => LLVMCodegen.implementsPrim
           | Control.X86Codegen => x86Codegen.implementsPrim
       val machine =
@@ -769,6 +772,11 @@ fun compile {input: 'a, resolve: 'a -> Machine.Program.t, outputC, outputLL, out
                (clearNames ()
                 ; (Control.trace (Control.Top, "C code gen")
                    CCodegen.output {program = machine,
+                                    outputC = outputC}))
+          | Control.RtemsCodegen =>
+               (clearNames ()
+                ; (Control.trace (Control.Top, "Rtems code gen")
+                   RtemsCodegen.output {program = machine,
                                     outputC = outputC}))
           | Control.LLVMCodegen =>
                (clearNames ()
