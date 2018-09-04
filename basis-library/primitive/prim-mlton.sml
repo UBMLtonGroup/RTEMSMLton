@@ -209,6 +209,7 @@ structure Platform =
              | Hurd
              | HPUX
              | Linux
+             | Rtems
              | MinGW
              | NetBSD
              | OpenBSD
@@ -223,6 +224,7 @@ structure Platform =
                 | "hurd" => Hurd
                 | "hpux" => HPUX
                 | "linux" => Linux
+                | "rtems" => Rtems
                 | "mingw" => MinGW
                 | "netbsd" => NetBSD
                 | "openbsd" => OpenBSD

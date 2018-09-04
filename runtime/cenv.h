@@ -74,6 +74,8 @@ COMPILE_TIME_ASSERT(sizeof_double__is_eight, sizeof(double) == 8);
 #include "platform/hurd.h"
 #elif (defined (__linux__))
 #include "platform/linux.h"
+#elif (defined (__rtems__))
+#include "platform/rtems_platform.h"
 #elif (defined (__MINGW32__))
 #include "platform/mingw.h"
 #elif (defined (__NetBSD__))

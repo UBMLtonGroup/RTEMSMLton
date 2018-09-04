@@ -19,7 +19,7 @@ signature MLTON_PLATFORM =
 
       structure OS:
          sig
-            datatype t = AIX | Cygwin | Darwin | FreeBSD | HPUX | Hurd
+            datatype t = AIX | Cygwin | Darwin | FreeBSD | HPUX | Hurd | Rtems
                        | Linux | MinGW | NetBSD | OpenBSD | Solaris
 
             val fromString: string -> t option
