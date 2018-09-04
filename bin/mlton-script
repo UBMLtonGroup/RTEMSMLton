@@ -2,6 +2,10 @@
 
 # This script calls MLton.
 
+GMP="/home/$(whoami)/rtems-dev/gmp-6.1.2-i386"
+GMP_LIB="$GMP/lib"
+RTEMS="/home/$(whoami)/rtems-dev/rtems/rtems-4.11-host/i386-rtems4.11/pc386/lib"
+PATH="/home/$(whoami)/rtems-dev/rtems/4.11/bin:$PATH"
 
 LIB_REL_BIN="../lib/mlton"
 
@@ -96,6 +100,7 @@ doit "$lib" \
         -target-cc-opt ia64-hpux "-mlp64"                        \
         -target-cc-opt ia64 "-mtune=itanium2"                    \
         -target-cc-opt sparc '-m32 -mcpu=v8 -Wa,-xarch=v8plusa'  \
+        -target-cc-opt rtems "-pipe -B$RTEMS -specs bsp_specs -qrtems -g -Wall -msoft-float -B$GMP -Wl,-Ttext,0x00100000 -mtune=i386 -DNO_FENV_H -L$GMP_LIB" \
         -target-cc-opt x86                                       \
                 '-m32
                 -fno-strength-reduce
@@ -115,5 +120,6 @@ doit "$lib" \
         -target-link-opt mingw '-Wl,--enable-stdcall-fixup'      \
         -target-link-opt solaris '-lnsl -lsocket -lrt'           \
         -target-link-opt x86 '-m32'                              \
+        -target-link-opt rtems  "-pipe -B$RTEMS -specs bsp_specs -qrtems -g -Wall -msoft-float -B$GMP -Wl,-Ttext,0x00100000 -mtune=i386 -DNO_FENV_H -L$GMP_LIB" \
         -profile-exclude '\$\(SML_LIB\)'                         \
         "$@"
