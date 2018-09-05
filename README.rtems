@@ -193,4 +193,4 @@ PART 3: Adding rtems code generator
     # Any other number and the compiler can optimize out your whole program and throw a "toplevel handler not installed" exception.
 # Add "orelse !Control.codegen = Control.RtemsCodegen" in backend/backend.fun around line 332
 
-# Basically just add something for RtemsCodegen wherever you see "CCodegen".  I just grepped for ccodegen and figured it out that way.
+# Basically just add something for RtemsCodegen wherever you see "CCodegen".  I just grepped for ccodegen and figured it out that way.  

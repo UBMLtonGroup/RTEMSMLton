@@ -177,6 +177,15 @@ constants:
 	./build-constants$(EXE) >"$(LIB)/targets/$(TARGET)/constants"
 	$(RM) build-constants$(EXE) build-constants.c
 
+.PHONY: rtems-constants
+rtems-constants:
+	@echo 'Creating rtems constants file.'
+	"$(BIN)/mlton" -target "$(TARGET)" -build-constants true > build-constants.c
+	"$(BIN)/mlton" -target "$(TARGET)" -output build-constants build-constants.c
+	#./build-constants$(EXE) >"$(LIB)/targets/$(TARGET)/constants"
+	qemu-system-i386 -no-reboot -append "--console=com1" -serial stdio -kernel build-consants > "$(LIB)/targets/$(TARGET)/constants"
+	$(RM) build-constants$(EXE) build-constants.c
+
 .PHONY: debugged
 debugged:
 	$(MAKE) -C "$(SRC)/mlton" MLTON_OUTPUT=mlton-compile.debug \
